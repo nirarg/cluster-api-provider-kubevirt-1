@@ -20,9 +20,10 @@ import (
 	gocontext "context"
 	"encoding/base64"
 	"fmt"
+	"time"
+
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/cluster-api-provider-kubevirt/pkg/ssh"
-	"time"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-kubevirt/api/v1alpha4"
 	"sigs.k8s.io/cluster-api-provider-kubevirt/pkg/context"
@@ -188,16 +189,16 @@ func (r *KubevirtMachineReconciler) reconcileNormal(ctx *context.MachineContext)
 	}
 
 	// Fetch SSH keys to be used for cluster nodes, and update bootstrap script cloud-init with public key
-	clusterNodeSshKeys := ssh.NewClusterNodeSshKeys(clusterContext, r.Client)
-	if persisted := clusterNodeSshKeys.IsPersistedToSecret(); !persisted {
-		ctx.Logger.Info("Waiting for ssh keys data secret to be created by KubevirtCluster controller...")
-		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
-	}
-	if err := clusterNodeSshKeys.FetchPersistedKeysFromSecret(); err != nil {
-		return ctrl.Result{}, errors.Wrap(err, "failed to fetch ssh keys for cluster nodes")
-	}
+	// clusterNodeSshKeys := ssh.NewClusterNodeSshKeys(clusterContext, r.Client)
+	// if persisted := clusterNodeSshKeys.IsPersistedToSecret(); !persisted {
+	// 	ctx.Logger.Info("Waiting for ssh keys data secret to be created by KubevirtCluster controller...")
+	// 	return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+	// }
+	// if err := clusterNodeSshKeys.FetchPersistedKeysFromSecret(); err != nil {
+	// 	return ctrl.Result{}, errors.Wrap(err, "failed to fetch ssh keys for cluster nodes")
+	// }
 
-	if err := r.reconcileKubevirtBootstrapSecret(ctx, clusterNodeSshKeys); err != nil {
+	if err := r.reconcileKubevirtBootstrapSecret(ctx, nil /*clusterNodeSshKeys*/); err != nil {
 		ctx.Logger.Info("Waiting for the Bootstrap provider controller to set bootstrap data")
 		conditions.MarkFalse(ctx.KubevirtMachine, infrav1.VMProvisionedCondition, infrav1.WaitingForBootstrapDataReason, clusterv1.ConditionSeverityInfo, "")
 		return ctrl.Result{}, nil
@@ -413,8 +414,10 @@ func (r *KubevirtMachineReconciler) reconcileKubevirtBootstrapSecret(ctx *contex
 		return errors.New("error retrieving bootstrap data: secret value key is missing")
 	}
 
-	ctx.Logger.Info("Adding users config to bootstrap data...")
-	updatedValue := []byte(string(value) + usersCloudConfig(sshKeys.PublicKey))
+	if sshKeys != nil {
+		ctx.Logger.Info("Adding users config to bootstrap data...")
+		updatedValue := []byte(string(value) + usersCloudConfig(sshKeys.PublicKey))
+	}
 
 	newBootstrapDataSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
