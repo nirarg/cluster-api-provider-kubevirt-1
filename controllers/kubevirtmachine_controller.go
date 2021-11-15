@@ -19,10 +19,12 @@ package controllers
 import (
 	gocontext "context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"time"
+
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/cluster-api-provider-kubevirt/pkg/ssh"
-	"time"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-kubevirt/api/v1alpha4"
 	"sigs.k8s.io/cluster-api-provider-kubevirt/pkg/context"
@@ -413,9 +415,10 @@ func (r *KubevirtMachineReconciler) reconcileKubevirtBootstrapSecret(ctx *contex
 		return errors.New("error retrieving bootstrap data: secret value key is missing")
 	}
 
-	ctx.Logger.Info("Adding users config to bootstrap data...")
-	updatedValue := []byte(string(value) + usersCloudConfig(sshKeys.PublicKey))
-
+	updatedValue, err := updateUserDataUsers(ctx, sshKeys.PublicKey, []byte(value))
+	if err != nil {
+		return errors.Wrapf(err, "failed to update users (userdata) for for KubevirtMachine %s/%s", ctx.Machine.GetNamespace(), ctx.Machine.GetName())
+	}
 	newBootstrapDataSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      s.Name + "-userdata",
@@ -423,7 +426,7 @@ func (r *KubevirtMachineReconciler) reconcileKubevirtBootstrapSecret(ctx *contex
 		},
 	}
 
-	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, newBootstrapDataSecret, func() error {
+	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, newBootstrapDataSecret, func() error {
 		newBootstrapDataSecret.Type = clusterv1.ClusterSecretType
 		newBootstrapDataSecret.Data = map[string][]byte{
 			"userdata": updatedValue,
@@ -494,6 +497,33 @@ func (r *KubevirtMachineReconciler) reconcileWorkloadClusterClient(ctx *context.
 	}
 
 	return workloadClusterClient, nil
+}
+
+func updateUserDataUsers(ctx *context.MachineContext, sshPublicKey []byte, src []byte) ([]byte, error) {
+	var dataMap map[string]interface{}
+	if err := json.Unmarshal(src, &dataMap); err == nil {
+		if _, ok := dataMap["passwd"]; !ok {
+			dataMap["passwd"] = map[string]interface{}{}
+		}
+		passwd := (dataMap["passwd"]).(map[string]interface{})
+
+		if _, ok := passwd["users"]; !ok {
+			passwd["users"] = []map[string]interface{}{}
+		}
+		newUser := map[string]interface{}{
+			"name":              "capk",
+			"sshAuthorizedKeys": sshPublicKey,
+		}
+		passwd["users"] = append(passwd["users"].([]map[string]interface{}), newUser)
+		result, err := json.Marshal(dataMap)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to update user data (ignition) for KubevirtMachine %s/%s", ctx.Machine.GetNamespace(), ctx.Machine.GetName())
+		}
+		return result, nil
+	} else {
+		ctx.Logger.Info("Adding users config to bootstrap data...")
+		return []byte(string(src) + usersCloudConfig(sshPublicKey)), nil
+	}
 }
 
 // usersCloudConfig generates 'users' cloud config for capk user with a given ssh public key
