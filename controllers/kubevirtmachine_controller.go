@@ -511,7 +511,7 @@ func updateUserDataUsers(ctx *context.MachineContext, sshPublicKey []byte, src [
 			passwd["users"] = []map[string]interface{}{}
 		}
 		newUser := map[string]interface{}{
-			"name":              "capk",
+			"name":              "core",
 			"sshAuthorizedKeys": sshPublicKey,
 		}
 		passwd["users"] = append(passwd["users"].([]map[string]interface{}), newUser)

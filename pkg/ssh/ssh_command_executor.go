@@ -37,7 +37,7 @@ func (e VMCommandExecutor) ExecuteCommand(command string) (string, error) {
 	signer, err := signerFromPem(e.PrivateKey, []byte(""))
 
 	sshConfig := &ssh.ClientConfig{
-		User: "capk",
+		User: "core",
 		Auth: []ssh.AuthMethod{
 			ssh.PublicKeys(signer),
 		},
