@@ -415,10 +415,11 @@ func (r *KubevirtMachineReconciler) reconcileKubevirtBootstrapSecret(ctx *contex
 		return errors.New("error retrieving bootstrap data: secret value key is missing")
 	}
 
-	updatedValue, err := updateUserDataUsers(ctx, sshKeys.PublicKey, []byte(value))
-	if err != nil {
-		return errors.Wrapf(err, "failed to update users (userdata) for for KubevirtMachine %s/%s", ctx.Machine.GetNamespace(), ctx.Machine.GetName())
-	}
+	//updatedValue, err := updateUserDataUsers(ctx, sshKeys.PublicKey, []byte(value))
+	//if err != nil {
+	//	return errors.Wrapf(err, "failed to update users (userdata) for for KubevirtMachine %s/%s", ctx.Machine.GetNamespace(), ctx.Machine.GetName())
+	//}
+	updatedValue := value
 	newBootstrapDataSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      s.Name + "-userdata",
@@ -426,7 +427,7 @@ func (r *KubevirtMachineReconciler) reconcileKubevirtBootstrapSecret(ctx *contex
 		},
 	}
 
-	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, newBootstrapDataSecret, func() error {
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, newBootstrapDataSecret, func() error {
 		newBootstrapDataSecret.Type = clusterv1.ClusterSecretType
 		newBootstrapDataSecret.Data = map[string][]byte{
 			"userdata": updatedValue,
