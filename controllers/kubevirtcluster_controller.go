@@ -18,6 +18,7 @@ package controllers
 
 import (
 	gocontext "context"
+
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -46,7 +47,6 @@ type KubevirtClusterReconciler struct {
 
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=kubevirtclusters,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=kubevirtclusters/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups="",resources=services;,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile reads that state of the cluster for a KubevirtCluster object and makes changes based on the state read
 // and what is in the KubevirtCluster.Spec.
