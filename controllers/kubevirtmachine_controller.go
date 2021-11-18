@@ -223,17 +223,17 @@ func (r *KubevirtMachineReconciler) reconcileNormal(ctx *context.MachineContext)
 		}
 	}
 
-	vmCommandExecutor := ssh.VMCommandExecutor{
-		IPAddress:  externalMachine.Address(),
-		PublicKey:  clusterNodeSshKeys.PublicKey,
-		PrivateKey: clusterNodeSshKeys.PrivateKey,
-	}
+	//vmCommandExecutor := ssh.VMCommandExecutor{
+	//	IPAddress:  externalMachine.Address(),
+	//	PublicKey:  clusterNodeSshKeys.PublicKey,
+	//	PrivateKey: clusterNodeSshKeys.PrivateKey,
+	//}
 
-	// Wait for VM to boot
-	if !externalMachine.IsBooted(vmCommandExecutor) {
-		ctx.Logger.Info("Waiting for underlying VM instance to boot...")
-		return ctrl.Result{RequeueAfter: 20 * time.Second}, nil
-	}
+	//// Wait for VM to boot
+	//if !externalMachine.IsBooted(vmCommandExecutor) {
+	//	ctx.Logger.Info("Waiting for underlying VM instance to boot...")
+	//	return ctrl.Result{RequeueAfter: 20 * time.Second}, nil
+	//}
 
 	// Update the VMProvisionedCondition condition
 	// NOTE: it is required to create the patch helper at this point, otherwise it won't surface if we issue a patch down in the code
@@ -256,15 +256,15 @@ func (r *KubevirtMachineReconciler) reconcileNormal(ctx *context.MachineContext)
 	}
 
 	// Wait for VM to bootstrap with Kubernetes
-	if !ctx.KubevirtMachine.Spec.Bootstrapped {
-		if !externalMachine.IsBootstrapped(vmCommandExecutor) {
-			ctx.Logger.Info("Waiting for underlying VM to bootstrap...")
-			conditions.MarkFalse(ctx.KubevirtMachine, infrav1.BootstrapExecSucceededCondition, infrav1.BootstrapFailedReason, clusterv1.ConditionSeverityWarning, "VM not bootstrapped yet")
-			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
-		}
+	// if !ctx.KubevirtMachine.Spec.Bootstrapped {
+	// 	if !externalMachine.IsBootstrapped(vmCommandExecutor) {
+	// 		ctx.Logger.Info("Waiting for underlying VM to bootstrap...")
+	// 		conditions.MarkFalse(ctx.KubevirtMachine, infrav1.BootstrapExecSucceededCondition, infrav1.BootstrapFailedReason, clusterv1.ConditionSeverityWarning, "VM not bootstrapped yet")
+	// 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+	// 	}
 
-		ctx.KubevirtMachine.Spec.Bootstrapped = true
-	}
+	// 	ctx.KubevirtMachine.Spec.Bootstrapped = true
+	// }
 
 	// Update the condition BootstrapExecSucceededCondition
 	conditions.MarkTrue(ctx.KubevirtMachine, infrav1.BootstrapExecSucceededCondition)
@@ -459,8 +459,8 @@ func (r *KubevirtMachineReconciler) reconcileKubevirtBootstrapSecret(ctx *contex
 	}
 
 	ctx.Logger.Info("Adding users config to bootstrap data...")
-	updatedValue := []byte(string(value) + usersCloudConfig(sshKeys.PublicKey))
-
+	// updatedValue := []byte(string(value) + usersCloudConfig(sshKeys.PublicKey))
+	updatedValue := value
 	newBootstrapDataSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      s.Name + "-userdata",
