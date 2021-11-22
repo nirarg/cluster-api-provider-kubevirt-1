@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	cloud.google.com/go v0.60.0 // indirect
+	github.com/emicklei/go-restful v2.10.0+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/go-logr/logr v0.4.0
 	github.com/onsi/ginkgo v1.16.4
@@ -20,7 +21,7 @@ require (
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/component-base v0.21.1
 	k8s.io/klog/v2 v2.8.0
-	kubevirt.io/client-go v0.36.0
+	kubevirt.io/api v0.0.0-20211117075245-c94ce62baf5a
 	sigs.k8s.io/cluster-api v0.3.11-0.20210525210043-6c7878e7b4a9
 	sigs.k8s.io/controller-runtime v0.9.0-beta.5
 	sigs.k8s.io/kind v0.11.0
