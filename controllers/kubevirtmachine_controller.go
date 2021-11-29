@@ -333,6 +333,7 @@ func (r *KubevirtMachineReconciler) updateNodeProviderID(ctx *context.MachineCon
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, errors.Wrapf(err, "failed to fetch workload cluster node")
 	}
 
+	ctx.Logger.Info("Patching node *******************************")
 	if workloadClusterNode.Spec.ProviderID == *ctx.KubevirtMachine.Spec.ProviderID {
 		// Node is already updated, return
 		return ctrl.Result{}, nil
